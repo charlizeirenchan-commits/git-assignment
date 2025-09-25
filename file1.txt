@@ -1,1 +1,77 @@
-"First file for ITMGT 45.03!" 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>API Project</title>
+</head>
+<body>
+  <h1>Movie Info + Ratings</h1>
+  <input id="search" placeholder="Enter movie title">
+  <button onclick="fetchData()">Search</button>
+  <div id="output"></div>
+  <script src="script.js"></script>
+</body>
+</html>
+async function fetchData() {
+  const query = document.getElementById("search").value;
+  const output = document.getElementById("output");
+  output.innerHTML = "Loading...";
+
+  try {
+    // API 1: OMDb
+    const omdbRes = await fetch(`https://www.omdbapi.com/?t=${query}&apikey=YOUR_OMDB_KEY`);
+    const omdbData = await omdbRes.json();
+
+    // API 2: TMDB
+    const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=YOUR_TMDB_KEY&query=${query}`);
+    const tmdbData = await tmdbRes.json();
+
+    if (!omdbData.Title || tmdbData.results.length === 0) {
+      output.innerHTML = "No results found. Try another movie.";
+      return;
+    }
+
+    // Combine: use title as key
+    const movie = {
+      title: omdbData.Title,
+      year: omdbData.Year,
+      genre: omdbData.Genre,
+      imdbRating: omdbData.imdbRating,
+      tmdbRating: tmdbData.results[0].vote_average,
+      // computed field: avg of IMDB + TMDB ratings
+      avgRating: ((parseFloat(omdbData.imdbRating) + tmdbData.results[0].vote_average) / 2).toFixed(1)
+    };
+
+    output.innerHTML = `
+      <h2>${movie.title} (${movie.year})</h2>
+      <p>Genre: ${movie.genre}</p>
+      <p>IMDB Rating: ${movie.imdbRating}</p>
+      <p>TMDB Rating: ${movie.tmdbRating}</p>
+      <p><b>Average Rating: ${movie.avgRating}</b></p>
+    `;
+  } catch (error) {
+    output.innerHTML = `Error fetching data. <button onclick="fetchData()">Retry</button>`;
+  }
+}
+# Movie Ratings Aggregator
+
+## Description
+Fetches movie info from OMDb and TMDB, combines ratings, and displays them with an average.
+
+## APIs Used
+- [OMDb](https://www.omdbapi.com/)
+- [TMDB](https://developer.themoviedb.org/)
+
+## How to Run
+1. Clone repo.
+2. Open `index.html` in a browser.
+3. Search for any movie.
+
+## Data Join
+Joined datasets by **movie title**.
+Computed field: average of IMDB + TMDB ratings.
+
+## Known Limitations
+- API keys required (free).
+- Ratings may differ due to different sources.
+
